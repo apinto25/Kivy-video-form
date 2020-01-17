@@ -193,12 +193,18 @@
         spacing: 10
 
         orientation: 'vertical'
-        KivyCamera:
-            id: qrcam
+        BoxLayout:
+            orientation: 'vertical'
+
+            Label:
+                text: 'Testing bananas'
+            KivyCamera:
+                id: qrcam
         BoxLayout:
             orientation: "horizontal"
-            height: 20
+            height: 30
             size_hint_y: None
+            spacing: 10
 
             Button:
                 id: butt_start

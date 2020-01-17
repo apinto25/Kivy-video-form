@@ -109,11 +109,13 @@ class KivyCamera(Image):
         return_value, frame = self.capture.read()
         if return_value:
             texture = self.texture
+            frame = cv2.resize(frame, (300, 300))
+            buf1 = cv2.flip(frame, 0)
             w, h = frame.shape[1], frame.shape[0]
             if not texture or texture.width != w or texture.height != h:
                 self.texture = texture = Texture.create(size=(w, h))
                 texture.flip_vertical()
-            texture.blit_buffer(frame.tobytes(), colorfmt='bgr')
+            texture.blit_buffer(buf1.tobytes(), colorfmt='bgr')
             self.canvas.ask_update()
 
 
@@ -136,8 +138,8 @@ class MainUserWindow(Screen):
 
     def dostart(self, *largs):
         global CAPTURE
-        CAPTURE = cv2.VideoCapture(
-            "/home/watson/Videos/2020-01-17 12-53-12.mp4")
+        CAPTURE = cv2.VideoCapture("rtsp://admin:admin@192.168.1.104")
+#            "/home/watson/Videos/2020-01-17 12-53-12.mp4")
         self.ids.qrcam.start(CAPTURE)
 
     def doexit(self):
