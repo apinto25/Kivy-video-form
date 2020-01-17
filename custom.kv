@@ -193,17 +193,21 @@
         spacing: 10
 
         orientation: 'vertical'
-        Camera:
-            id: camera
-            #resolution: (320, 240)
-            play: False
-        ToggleButton:
-            text: 'Play'
-            on_press: camera.play = not camera.play
+        KivyCamera:
+            id: qrcam
+        BoxLayout:
+            orientation: "horizontal"
+            height: 20
             size_hint_y: None
-            height: '48dp'
-        Button:
-            text: 'Capture'
-            size_hint_y: None
-            height: '48dp'
-            on_press: root.capture()
+
+            Button:
+                id: butt_start
+                size_hint: 0.5,1
+                text: "start"
+                on_press: root.dostart()
+
+            Button:
+                id: butt_exit
+                text: "quit"
+                size_hint: 0.5,1
+                on_press: root.doexit()

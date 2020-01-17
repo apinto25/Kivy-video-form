@@ -5,7 +5,12 @@ from kivy.properties import ObjectProperty
 from kivy.uix.screenmanager import ScreenManager, Screen
 from kivy.uix.popup import Popup
 from kivy.uix.label import Label
+from kivy.graphics.texture import Texture
+from kivy.clock import Clock
+from kivy.uix.image import Image
+from kivy.base import EventLoop
 import time
+import cv2
 
 
 class WindowManager(ScreenManager):
@@ -86,13 +91,62 @@ class NewUserWindow(Screen):
         self.password_again.text = ""
 
 
+class KivyCamera(Image):
+
+    def __init__(self, **kwargs):
+        super(KivyCamera, self).__init__(**kwargs)
+        self.capture = None
+
+    def start(self, capture, fps=30):
+        self.capture = capture
+        Clock.schedule_interval(self.update, 1.0 / fps)
+
+    def stop(self):
+        Clock.unschedule_interval(self.update)
+        self.capture = None
+
+    def update(self, dt):
+        return_value, frame = self.capture.read()
+        if return_value:
+            texture = self.texture
+            w, h = frame.shape[1], frame.shape[0]
+            if not texture or texture.width != w or texture.height != h:
+                self.texture = texture = Texture.create(size=(w, h))
+                texture.flip_vertical()
+            texture.blit_buffer(frame.tobytes(), colorfmt='bgr')
+            self.canvas.ask_update()
+
+
+CAPTURE = None
+
+
+#class MainUserWindow(Screen):
+#
+#    def capture(self):
+#        camera = self.ids['camera']
+#        timestr = time.strftime("%Y%m%d_%H%M%S")
+#        camera.export_to_png("IMG_{}.png".format(timestr))
+#        print("Captured")
+
+
 class MainUserWindow(Screen):
 
-    def capture(self):
-        camera = self.ids['camera']
-        timestr = time.strftime("%Y%m%d_%H%M%S")
-        camera.export_to_png("IMG_{}.png".format(timestr))
-        print("Captured")
+    def init_qrtest(self):
+        pass
+
+    def dostart(self, *largs):
+        global CAPTURE
+        CAPTURE = cv2.VideoCapture(
+            "/home/watson/Videos/2020-01-17 12-53-12.mp4")
+        self.ids.qrcam.start(CAPTURE)
+
+    def doexit(self):
+        global CAPTURE
+        if CAPTURE != None:
+            CAPTURE.release()
+            CAPTURE = None
+#        EventLoop.close()
+        ANA_BANANA.current = "login"
 
 
 def user_with_sapces():
