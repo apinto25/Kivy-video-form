@@ -11,6 +11,7 @@ from kivy.uix.image import Image
 from kivy.base import EventLoop
 import time
 import cv2
+import sqlite3
 
 
 class WindowManager(ScreenManager):
@@ -18,15 +19,20 @@ class WindowManager(ScreenManager):
 
 
 class LoginWindow(Screen):
+    global CON
     user_name = ObjectProperty(None)
     password = ObjectProperty(None)
 
     def submit(self):
-        if self.user_name.text == "ana" and self.password.text == "banana":
+        info = user_login(CON, self.user_name.text, self.password.text)
+        if info == "no_exist":
+            nonexistent_user_popup()
+            self.reset()
+        elif info == "correct":
             self.reset()
             ANA_BANANA.current = "main"
         else:
-            invalid_login()
+            invalid_login_popup()
             self.reset()
 
     def create_user(self):
@@ -39,6 +45,7 @@ class LoginWindow(Screen):
 
 
 class NewUserWindow(Screen):
+    global CON
     full_name = ObjectProperty(None)
     user_name = ObjectProperty(None)
     email = ObjectProperty(None)
@@ -64,24 +71,27 @@ class NewUserWindow(Screen):
                     print("Email ok")
                     if self.password.text == self.password_again.text:
                         print("Passwords ok")
-                        if self.user_name.text != "ana" or self.email.text != "ana@banana.com":
+                        created = user_created(
+                            CON, self.full_name.text, self.user_name.text, self.email.text, self.password.text)
+                        if created:
                             print("Nostánrepetidos")
-                            correctly_created(self.user_name.text)
-                            ANA_BANANA.current = "login"
                             self.reset()
+                            correctly_created_popup(self.user_name.text)
+                            ANA_BANANA.current = "login"
                         else:
-                            user_already_exists()
+                            user_exists_popup()
                     else:
-                        passwords_dont_match()
+                        diff_passwords_popup()
                 else:
-                    invalid_email()
+                    invalid_email_popup()
             else:
-                user_with_sapces()
+                user_spaces_popup()
         else:
-            empty_fields()
+            empty_fields_popup()
 
     def go_login(self):
         ANA_BANANA.current = "login"
+        self.reset()
 
     def reset(self):
         self.full_name.text = ""
@@ -122,7 +132,7 @@ class KivyCamera(Image):
 CAPTURE = None
 
 
-#class MainUserWindow(Screen):
+# class MainUserWindow(Screen):
 #
 #    def capture(self):
 #        camera = self.ids['camera']
@@ -151,21 +161,21 @@ class MainUserWindow(Screen):
         ANA_BANANA.current = "login"
 
 
-def user_with_sapces():
+def user_spaces_popup():
     pop = Popup(title="Usuario inválido",
                 content=Label(text='El usuario no debe\ncontener espacios.'),
                 size_hint=(None, None), size=(300, 150))
     pop.open()
 
 
-def empty_fields():
+def empty_fields_popup():
     pop = Popup(title="Campos vacíos",
                 content=Label(text='Uno o más campos\nestán vacíos.'),
                 size_hint=(None, None), size=(300, 150))
     pop.open()
 
 
-def user_already_exists():
+def user_exists_popup():
     pop = Popup(title="El usuario ya existe",
                 content=Label(
                     text='El usuario o el email ya\nse encuentran registrados.'),
@@ -173,7 +183,7 @@ def user_already_exists():
     pop.open()
 
 
-def invalid_email():
+def invalid_email_popup():
     pop = Popup(title="Email inválido",
                 content=Label(
                     text='Formato de correo\nelectrónico incorrecto'),
@@ -181,26 +191,75 @@ def invalid_email():
     pop.open()
 
 
-def passwords_dont_match():
+def diff_passwords_popup():
     pop = Popup(title="Contraseña incorrecta",
                 content=Label(text='Las contraseñas no\ncoinciden'),
                 size_hint=(None, None), size=(300, 150))
     pop.open()
 
 
-def correctly_created(user_name):
+def correctly_created_popup(user_name):
     pop = Popup(title="Usuario creado",
-                content=Label(text='Usuario ' + user_name + 'creado'),
+                content=Label(text='Usuario ' + user_name + ' creado'),
                 size_hint=(None, None), size=(300, 150))
     pop.open()
 
 
-def invalid_login():
+def invalid_login_popup():
     pop = Popup(title="",
                 content=Label(text='Usuario o contraseña incorrectos.'),
                 size_hint=(None, None), size=(300, 150))
     pop.open()
 
+
+def nonexistent_user_popup():
+    pop = Popup(title="El usuario no existe",
+                content=Label(
+                    text='El usuario ingresado no se\nencuentra registrado.'),
+                size_hint=(None, None), size=(300, 150))
+    pop.open()
+
+
+def user_created(con, full_name, user_name, email, password):
+    cursorObj = con.cursor()
+    cursorObj.execute(
+        """SELECT user_name, email FROM USER
+        WHERE user_name = ? OR email = ?""",
+        (user_name, email)
+    )
+    rows = cursorObj.fetchall()
+    if len(rows) == 0:
+        cursorObj.execute(
+            """INSERT INTO USER (full_name, user_name, email, password) 
+            VALUES(?, ?, ?, ?)""",
+            (full_name, user_name, email, password)
+        )
+        created = True
+    else:
+        created = False
+
+    con.commit()
+    print("saved")
+    return created
+
+
+def user_login(con, user_name, password):
+    cursorObj = con.cursor()
+    cursorObj.execute(
+        "SELECT password FROM USER WHERE user_name = ?", (user_name,))
+    user = cursorObj.fetchone()
+    print(user)
+    if user is None:
+        info = "no_exist"
+    elif user[0] == password:
+        info = "correct"
+    else:
+        info = "incorrect"
+
+    return info
+
+
+CON = sqlite3.connect('DB/users.db')
 
 Window.size = (480, 480)
 KV = Builder.load_file("custom.kv")
