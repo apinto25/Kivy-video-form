@@ -119,7 +119,7 @@ class KivyCamera(Image):
         return_value, frame = self.capture.read()
         if return_value:
             texture = self.texture
-            frame = cv2.resize(frame, (300, 300))
+            frame = cv2.resize(frame, (350, 350))
             buf1 = cv2.flip(frame, 0)
             w, h = frame.shape[1], frame.shape[0]
             if not texture or texture.width != w or texture.height != h:
@@ -239,7 +239,6 @@ def user_created(con, full_name, user_name, email, password):
         created = False
 
     con.commit()
-    print("saved")
     return created
 
 
@@ -248,7 +247,6 @@ def user_login(con, user_name, password):
     cursorObj.execute(
         "SELECT password FROM USER WHERE user_name = ?", (user_name,))
     user = cursorObj.fetchone()
-    print(user)
     if user is None:
         info = "no_exist"
     elif user[0] == password:
