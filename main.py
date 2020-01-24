@@ -29,6 +29,8 @@ class LoginWindow(Screen):
             nonexistent_user_popup()
             self.reset()
         elif info == "correct":
+            mainw = self.manager.get_screen("main")
+            mainw.update_title("Welcome " + self.password.text)
             self.reset()
             ANA_BANANA.current = "main"
         else:
@@ -142,6 +144,7 @@ CAPTURE = None
 
 
 class MainUserWindow(Screen):
+    title = ObjectProperty(None)
 
     def init_qrtest(self):
         pass
@@ -151,6 +154,9 @@ class MainUserWindow(Screen):
         CAPTURE = cv2.VideoCapture("rtsp://admin:admin@192.168.1.104")
 #            "/home/watson/Videos/2020-01-17 12-53-12.mp4")
         self.ids.qrcam.start(CAPTURE)
+#        loginw = self.manager.get_screen("login")
+#        self.title.text = loginw.user_name.text
+#        print(loginw.user_name.text)
 
     def doexit(self):
         global CAPTURE
@@ -160,6 +166,8 @@ class MainUserWindow(Screen):
 #        EventLoop.close()
         ANA_BANANA.current = "login"
 
+    def update_title(self, message):
+        self.title.text = message
 
 def user_spaces_popup():
     pop = Popup(title="Usuario inválido",

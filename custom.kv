@@ -179,6 +179,7 @@
 
 <MainUserWindow>:
     name:"main"
+    title: title
 
     GridLayout:
         canvas:
@@ -196,7 +197,8 @@
         BoxLayout:
             orientation: 'vertical'
             Label:
-                text: 'Testing bananas'
+                id: title
+                #text: 'Testing bananas'
                 size_hint: 1, 0.1
             KivyCamera:
                 id: qrcam
