@@ -195,13 +195,23 @@
 
         orientation: 'vertical'
         BoxLayout:
-            orientation: 'vertical'
+            orientation: "horizontal"
+            height: 30
+            size_hint_y: None
+            spacing: 10
+
             Label:
                 id: title
-                #text: 'Testing bananas'
                 size_hint: 1, 0.1
+        BoxLayout:
+            orientation: 'horizontal'
+            spacing: 5
             KivyCamera:
                 id: qrcam
+                size_hint: 1, 0.9
+                source: "images/banana.png"
+            KivyCamera:
+                id: qrcam_one
                 size_hint: 1, 0.9
                 source: "images/banana.png"
         BoxLayout:
@@ -213,11 +223,11 @@
             Button:
                 id: butt_start
                 size_hint: 0.5,1
-                text: "start"
+                text: "Start"
                 on_press: root.dostart()
 
             Button:
                 id: butt_exit
-                text: "quit"
+                text: "Quit"
                 size_hint: 0.5,1
                 on_press: root.doexit()

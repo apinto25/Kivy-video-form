@@ -25,12 +25,13 @@ class LoginWindow(Screen):
 
     def submit(self):
         info = user_login(CON, self.user_name.text, self.password.text)
-        if info == "no_exist":
+        if info == "non_existent":
             nonexistent_user_popup()
             self.reset()
         elif info == "correct":
             mainw = self.manager.get_screen("main")
-            mainw.update_title("Welcome " + self.password.text)
+            full_name = get_full_name(CON, self.user_name.text)
+            mainw.update_title("Welcome " + full_name[0])
             self.reset()
             ANA_BANANA.current = "main"
         else:
@@ -66,17 +67,12 @@ class NewUserWindow(Screen):
         result = ["empty" for field in fields if not field.strip()]
 
         if len(result) == 0:
-            print("Todos los campos están llenitos")
             if not " " in self.user_name.text:
-                print("User ok")
                 if self.email.text.count("@") == 1 and self.email.text.split("@")[1].count(".") >= 1:
-                    print("Email ok")
                     if self.password.text == self.password_again.text:
-                        print("Passwords ok")
                         created = user_created(
                             CON, self.full_name.text, self.user_name.text, self.email.text, self.password.text)
                         if created:
-                            print("Nostánrepetidos")
                             self.reset()
                             correctly_created_popup(self.user_name.text)
                             ANA_BANANA.current = "login"
@@ -131,17 +127,8 @@ class KivyCamera(Image):
             self.canvas.ask_update()
 
 
-CAPTURE = None
-
-
-# class MainUserWindow(Screen):
-#
-#    def capture(self):
-#        camera = self.ids['camera']
-#        timestr = time.strftime("%Y%m%d_%H%M%S")
-#        camera.export_to_png("IMG_{}.png".format(timestr))
-#        print("Captured")
-
+CAM1 = None
+CAM2 = None
 
 class MainUserWindow(Screen):
     title = ObjectProperty(None)
@@ -150,20 +137,21 @@ class MainUserWindow(Screen):
         pass
 
     def dostart(self, *largs):
-        global CAPTURE
-        CAPTURE = cv2.VideoCapture("rtsp://admin:admin@192.168.1.104")
-#            "/home/watson/Videos/2020-01-17 12-53-12.mp4")
-        self.ids.qrcam.start(CAPTURE)
-#        loginw = self.manager.get_screen("login")
-#        self.title.text = loginw.user_name.text
-#        print(loginw.user_name.text)
+        global CAM1, CAM2
+        CAM1 = cv2.VideoCapture("/home/watson/Documents/RCR/heatmap/input_videos/Retail03.mp4")
+        CAM2 = cv2.VideoCapture("rtsp://test:test@192.168.1.103")
+        self.ids.qrcam.start(CAM1)
+        self.ids.qrcam_one.start(CAM2)
+
 
     def doexit(self):
-        global CAPTURE
-        if CAPTURE != None:
-            CAPTURE.release()
-            CAPTURE = None
-#        EventLoop.close()
+        global CAM1, CAM2
+        if CAM1 != None:
+            CAM1.release()
+            CAM1 = None
+        if CAM2 != None:
+            CAM2.release()
+            CAM2 = None
         ANA_BANANA.current = "login"
 
     def update_title(self, message):
@@ -249,6 +237,15 @@ def user_created(con, full_name, user_name, email, password):
     con.commit()
     return created
 
+def get_full_name(con, user_name):
+    cur = con.cursor()
+    cur.execute(
+        """SELECT full_name FROM USER
+        WHERE user_name = ?""",
+        (user_name,)
+    )
+    full_name = cur.fetchone()
+    return full_name
 
 def user_login(con, user_name, password):
     cursorObj = con.cursor()
@@ -256,7 +253,7 @@ def user_login(con, user_name, password):
         "SELECT password FROM USER WHERE user_name = ?", (user_name,))
     user = cursorObj.fetchone()
     if user is None:
-        info = "no_exist"
+        info = "non_existent"
     elif user[0] == password:
         info = "correct"
     else:
